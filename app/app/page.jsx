@@ -111,7 +111,11 @@ export default function ProBoard() {
     setLoaded(true);
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const tryAdminLogin = () => {
     if (adminInput === ADMIN_PASSWORD) { setIsAdmin(true); setShowAdminLogin(false); setAdminInput(""); }
@@ -176,7 +180,7 @@ export default function ProBoard() {
       setJobs([form, ...jobs]);
     }
     setSubmitted(true);
-    setTimeout(() => { setSubmitted(false); setTab("find"); setForm(blankContractor()); }, 2500);
+    setTimeout(() => { setSubmitted(false); setTab("find"); setForm(blankContractor()); loadData(); }, 2500);
   };
 
   const goPost = (type) => { setFormType(type); setForm(type==="contractor"?blankContractor():blankJob()); setTab("form"); setSelected(null); };
@@ -214,6 +218,10 @@ export default function ProBoard() {
           <span style={{fontFamily:"'Epilogue',sans-serif",fontSize:10,color:syncing?"#2E6B3E":"#555",letterSpacing:"0.06em"}}>
             {syncing ? "syncing…" : `${contractors.length} pros · ${jobs.length} jobs`}
           </span>
+          <button onClick={loadData} disabled={syncing}
+            style={{background:"none",border:`1px solid ${syncing?"#2E6B3E":"#333"}`,color:syncing?"#2E6B3E":"#555",fontFamily:"'Epilogue',sans-serif",fontSize:9,padding:"4px 8px",cursor:"pointer",letterSpacing:"0.06em"}}>
+            {syncing ? "..." : "↻"}
+          </button>
           <button onClick={()=>setShowAdminLogin(s=>!s)}
             style={{background:isAdmin?"#2E6B3E":"none",border:`1px solid ${isAdmin?"#2E6B3E":"#333"}`,color:isAdmin?"#fff":"#555",fontFamily:"'Epilogue',sans-serif",fontSize:9,padding:"4px 8px",cursor:"pointer",letterSpacing:"0.06em"}}>
             {isAdmin?"ADMIN ✓":"ADMIN"}
