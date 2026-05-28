@@ -152,7 +152,7 @@ export default function Home() {
       <div class="nav-sub">Trade Network</div>
     </div>
   </div>
-  <a href="https://proboard.vercel.app/app" class="nav-cta">Find a contractor</a>
+  <a href="https://proboard-roan.vercel.app/app" class="nav-cta">Find a contractor</a>
 </nav>
 
 <section class="hero">
@@ -162,8 +162,8 @@ export default function Home() {
     <h1>Find the right<br/>contractor. <em>Fast.</em></h1>
     <p class="hero-sub"><strong>ProBoard</strong> connects homeowners with verified local contractors across every trade. HVAC, roofing, plumbing, electrical, landscaping and more — all in one place.</p>
     <div class="hero-actions">
-      <a href="https://proboard.vercel.app/app" class="btn-primary">Browse contractors</a>
-      <a href="https://proboard.vercel.app/app" class="btn-ghost">Post a job free</a>
+      <a href="https://proboard-roan.vercel.app/app" class="btn-primary">Browse contractors</a>
+      <a href="https://proboard-roan.vercel.app/app" class="btn-ghost">Post a job free</a>
     </div>
     <div class="hero-stats">
       <div><div class="hero-stat-val">15+</div><div class="hero-stat-label">TRADES COVERED</div></div>
@@ -250,7 +250,7 @@ export default function Home() {
           <li>Customer reviews</li>
           <li>Searchable by trade &amp; state</li>
         </ul>
-        <a href="https://proboard.vercel.app/app" class="btn-plan outline">List my business</a>
+        <a href="https://proboard-roan.vercel.app/app" class="btn-plan outline">List my business</a>
       </div>
       <div class="price-card featured">
         <div class="price-badge">MOST POPULAR</div>
@@ -265,7 +265,7 @@ export default function Home() {
           <li>Top of results in your trade</li>
           <li>Cancel any time</li>
         </ul>
-        <a href="https://proboard.vercel.app/app" class="btn-plan">Get featured — $19/mo</a>
+        <a href="https://proboard-roan.vercel.app/app" class="btn-plan">Get featured — $19/mo</a>
       </div>
       <div class="price-card">
         <div class="price-label">For homeowners</div>
@@ -279,7 +279,7 @@ export default function Home() {
           <li>Direct contractor contact</li>
           <li>No commission fees</li>
         </ul>
-        <a href="https://proboard.vercel.app/app" class="btn-plan outline">Post a job</a>
+        <a href="https://proboard-roan.vercel.app/app" class="btn-plan outline">Post a job</a>
       </div>
     </div>
   </div>
@@ -330,8 +330,8 @@ export default function Home() {
     <h2>Ready to get to work?</h2>
     <p>Free to list. Free to post. No credit card.</p>
     <div class="cta-actions">
-      <a href="https://proboard.vercel.app/app" class="btn-primary">Browse contractors</a>
-      <a href="https://proboard.vercel.app/app" class="btn-ghost">List my business</a>
+      <a href="https://proboard-roan.vercel.app/app" class="btn-primary">Browse contractors</a>
+      <a href="https://proboard-roan.vercel.app/app" class="btn-ghost">List my business</a>
     </div>
   </div>
 </div>
