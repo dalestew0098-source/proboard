@@ -56,6 +56,20 @@ export default function ProBoard() {
   const [formType, setFormType]       = useState("contractor");
   const [form, setForm]               = useState(blankContractor());
   const [submitted, setSubmitted]     = useState(false);
+  const [saving, setSaving]           = useState(false);
+  const [isAdmin, setIsAdmin]         = useState(false);
+  const [adminInput, setAdminInput]   = useState("");
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+
+  const ADMIN_PASSWORD = "proboard2024";
+
+  const tryAdminLogin = () => {
+    if (adminInput === ADMIN_PASSWORD) { setIsAdmin(true); setShowAdminLogin(false); setAdminInput(""); }
+    else { alert("Incorrect password."); }
+  };
+
+  const deleteContractor = (id) => { if (window.confirm("Remove this listing?")) setContractors(contractors.filter(c => c.id !== id)); };
+  const deleteJob = (id) => { if (window.confirm("Remove this job?")) setJobs(jobs.filter(j => j.id !== id)); };
 
   useEffect(() => {
     try {
@@ -65,7 +79,10 @@ export default function ProBoard() {
   }, []);
 
   const persist = useCallback((c,j) => {
-    try { window.localStorage?.setItem(KEY, JSON.stringify({contractors:c,jobs:j})); } catch {}
+    setSaving(true);
+    try { window.localStorage?.setItem(KEY, JSON.stringify({contractors:c,jobs:j})); }
+    catch {}
+    finally { setTimeout(() => setSaving(false), 400); }
   },[]);
 
   useEffect(() => { if(loaded) persist(contractors,jobs); },[contractors,jobs,loaded]);
@@ -116,12 +133,35 @@ export default function ProBoard() {
             <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:9,color:"#888",letterSpacing:"0.14em",marginTop:1,textTransform:"uppercase"}}>Trade Network</div>
           </div>
         </div>
-        <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:10,color:"#555",letterSpacing:"0.06em"}}>
-          {contractors.length} pros · {jobs.length} jobs
+        <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:10,color: saving ? "#2E6B3E" : "#555",letterSpacing:"0.06em",display:"flex",alignItems:"center",gap:12}}>
+          <span>{contractors.length} pros · {jobs.length} jobs</span>
+          <button onClick={()=>setShowAdminLogin(s=>!s)}
+            style={{background:isAdmin?"#2E6B3E":"none",border:`1px solid ${isAdmin?"#2E6B3E":"#333"}`,color:isAdmin?"#fff":"#555",fontFamily:"'Epilogue',sans-serif",fontSize:9,padding:"4px 8px",cursor:"pointer",letterSpacing:"0.06em"}}>
+            {isAdmin ? "ADMIN ✓" : "ADMIN"}
+          </button>
         </div>
       </div>
 
-      {/* NAV */}
+      {/* ADMIN LOGIN PANEL */}
+      {showAdminLogin && !isAdmin && (
+        <div style={{background:"#1C1C1A",padding:"12px 16px",display:"flex",gap:8,alignItems:"center",borderBottom:"1px solid #333"}}>
+          <input value={adminInput} onChange={e=>setAdminInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&tryAdminLogin()}
+            placeholder="Admin password" type="password"
+            style={{flex:1,background:"#2A2A28",border:"1px solid #444",color:"#F7F3EC",padding:"8px 10px",fontSize:13,fontFamily:"'Epilogue',sans-serif"}}/>
+          <button onClick={tryAdminLogin} style={{background:"#2E6B3E",border:"none",color:"#fff",fontFamily:"'Epilogue',sans-serif",fontWeight:700,fontSize:12,padding:"8px 14px",cursor:"pointer"}}>
+            Login
+          </button>
+          <button onClick={()=>setShowAdminLogin(false)} style={{background:"none",border:"1px solid #444",color:"#888",fontFamily:"'Epilogue',sans-serif",fontSize:12,padding:"8px 10px",cursor:"pointer"}}>
+            ✕
+          </button>
+        </div>
+      )}
+      {isAdmin && (
+        <div style={{background:"#0D1F12",borderBottom:"1px solid #2E6B3E",padding:"8px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span style={{fontFamily:"'Epilogue',sans-serif",fontSize:11,color:"#2E6B3E",fontWeight:700,letterSpacing:"0.08em"}}>ADMIN MODE — tap any listing to delete it</span>
+          <button onClick={()=>setIsAdmin(false)} style={{background:"none",border:"none",color:"#2E6B3E",fontSize:12,cursor:"pointer",fontFamily:"'Epilogue',sans-serif"}}>Exit</button>
+        </div>
+      )}
       <div style={{background:"#F7F3EC",borderBottom:"1px solid #DDD8CE",display:"flex",overflowX:"auto"}}>
         {[["find","Browse"],["form-c","List My Business"],["form-j","Post a Job"],["about","How It Works"]].map(([key,label])=>(
           <button key={key} onClick={()=>{
@@ -182,8 +222,8 @@ export default function ProBoard() {
             <div style={{padding:"12px 14px 80px"}}>
               {filteredContractors.length===0 && <div style={{textAlign:"center",padding:"40px 20px",fontFamily:"'Epilogue',sans-serif",fontSize:13,color:"#999"}}>No contractors found.</div>}
               {filteredContractors.map(c=>(
-                <div key={c.id} className="hov-card" onClick={()=>setSelected(c)}
-                  style={{background:"#fff",border:"1px solid #E5E0D6",marginBottom:8,padding:"14px 16px",cursor:"pointer",transition:"box-shadow 0.15s",position:"relative"}}>
+                <div key={c.id} className="hov-card" onClick={()=>isAdmin ? deleteContractor(c.id) : setSelected(c)}
+                  style={{background:isAdmin?"#FFF5F5":"#fff",border:`1px solid ${isAdmin?"#FCA5A5":"#E5E0D6"}`,marginBottom:8,padding:"14px 16px",cursor:"pointer",transition:"box-shadow 0.15s",position:"relative"}}>
                   {c.featured && <div style={{position:"absolute",top:0,right:0,background:"#2E6B3E",fontFamily:"'Epilogue',sans-serif",fontWeight:700,fontSize:9,color:"#fff",padding:"3px 8px",letterSpacing:"0.08em"}}>FEATURED</div>}
                   <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
                     <div style={{width:42,height:42,background:"#F0EBE0",border:"1px solid #DDD8CE",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18,color:"#2E6B3E"}}>
@@ -217,8 +257,8 @@ export default function ProBoard() {
             <div style={{padding:"12px 14px 80px"}}>
               {filteredJobs.length===0 && <div style={{textAlign:"center",padding:"40px 20px",fontFamily:"'Epilogue',sans-serif",fontSize:13,color:"#999"}}>No jobs found.</div>}
               {filteredJobs.map(j=>(
-                <div key={j.id} className="hov-card" onClick={()=>setSelected(j)}
-                  style={{background:"#fff",border:`1px solid ${j.urgent?"#C45C1A":"#E5E0D6"}`,marginBottom:8,padding:"14px 16px",cursor:"pointer",transition:"box-shadow 0.15s"}}>
+                <div key={j.id} className="hov-card" onClick={()=>isAdmin ? deleteJob(j.id) : setSelected(j)}
+                  style={{background:isAdmin?"#FFF5F5":"#fff",border:`1px solid ${j.urgent&&!isAdmin?"#C45C1A":isAdmin?"#FCA5A5":"#E5E0D6"}`,marginBottom:8,padding:"14px 16px",cursor:"pointer",transition:"box-shadow 0.15s"}}>
                   {j.urgent && <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:10,fontWeight:700,color:"#C45C1A",letterSpacing:"0.06em",marginBottom:6}}>URGENT</div>}
                   <div style={{fontFamily:"'Epilogue',sans-serif",fontWeight:700,fontSize:15,color:"#1C1C1A",marginBottom:6}}>{j.title}</div>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
