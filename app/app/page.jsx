@@ -128,30 +128,54 @@ export default function ProBoard() {
       : jobs.find(j => j.id === deleteModal.id);
     if (!item) return;
     if (deleteCodeInput !== item.delete_code) { setDeleteError(true); return; }
-    if (deleteModal.type === "contractor") {
-      setContractors(contractors.filter(c => c.id !== deleteModal.id));
-      await db.delete("contractors", deleteModal.id);
-    } else {
-      setJobs(jobs.filter(j => j.id !== deleteModal.id));
-      await db.delete("jobs", deleteModal.id);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${deleteModal.type === "contractor" ? "contractors" : "jobs"}?id=eq.${deleteModal.id}`, {
+        method: "DELETE",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "return=representation"
+        }
+      });
+      if (deleteModal.type === "contractor") {
+        setContractors(prev => prev.filter(c => c.id !== deleteModal.id));
+      } else {
+        setJobs(prev => prev.filter(j => j.id !== deleteModal.id));
+      }
+      setDeleteSuccess(true);
+      setTimeout(() => {
+        setDeleteModal(null); setDeleteCodeInput(""); setDeleteError(false); setDeleteSuccess(false);
+        loadData();
+      }, 2000);
+    } catch(e) {
+      alert("Delete failed. Please try again.");
     }
-    setDeleteSuccess(true);
-    setTimeout(() => { setDeleteModal(null); setDeleteCodeInput(""); setDeleteError(false); setDeleteSuccess(false); }, 2000);
   };
 
   const deleteContractor = async (id) => {
     if (!window.confirm("Remove this listing?")) return;
-    setContractors(contractors.filter(c => c.id !== id));
-    if (!id.startsWith("c1") && !id.startsWith("c2") && !id.startsWith("c3") && !id.startsWith("c4") && !id.startsWith("c5")) {
-      await db.delete("contractors", id);
+    const isSeed = ["c1","c2","c3","c4","c5"].includes(id);
+    setContractors(prev => prev.filter(c => c.id !== id));
+    if (!isSeed) {
+      await fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${id}`, {
+        method: "DELETE",
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Prefer: "return=representation" }
+      });
+      setTimeout(loadData, 500);
     }
   };
 
   const deleteJob = async (id) => {
     if (!window.confirm("Remove this job?")) return;
-    setJobs(jobs.filter(j => j.id !== id));
-    if (!id.startsWith("j1") && !id.startsWith("j2") && !id.startsWith("j3")) {
-      await db.delete("jobs", id);
+    const isSeed = ["j1","j2","j3"].includes(id);
+    setJobs(prev => prev.filter(j => j.id !== id));
+    if (!isSeed) {
+      await fetch(`${SUPABASE_URL}/rest/v1/jobs?id=eq.${id}`, {
+        method: "DELETE",
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Prefer: "return=representation" }
+      });
+      setTimeout(loadData, 500);
     }
   };
 
