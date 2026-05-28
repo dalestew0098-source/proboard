@@ -62,8 +62,9 @@ const SEED_JOBS = [
   { id:"j3", title:"Bathroom Plumbing Remodel", trade:"Plumbing", city:"Seattle", state:"WA", budget:"$1,500–$2,500", description:"Full bathroom rough-in for remodel. Moving shower, toilet and sink. Permits handled by homeowner.", contact:"homeowner3@example.com", posted:"2024-06-03", urgent:false },
 ];
 
-const blankContractor = () => ({ id:"c"+Date.now(), name:"", trade:"HVAC", city:"", state:"TX", bio:"", phone:"", email:"", licensed:false, insured:false, rating:0, reviews:0, featured:false, joined:new Date().toISOString().slice(0,7) });
-const blankJob = () => ({ id:"j"+Date.now(), title:"", trade:"HVAC", city:"", state:"TX", budget:"", description:"", contact:"", posted:new Date().toISOString().slice(0,10), urgent:false });
+const genCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+const blankContractor = () => ({ id:"c"+Date.now(), name:"", trade:"HVAC", city:"", state:"TX", bio:"", phone:"", email:"", licensed:false, insured:false, rating:0, reviews:0, featured:false, joined:new Date().toISOString().slice(0,7), delete_code:genCode() });
+const blankJob = () => ({ id:"j"+Date.now(), title:"", trade:"HVAC", city:"", state:"TX", budget:"", description:"", contact:"", posted:new Date().toISOString().slice(0,10), urgent:false, delete_code:genCode() });
 
 export default function ProBoard() {
   const [contractors, setContractors] = useState([]);
@@ -80,6 +81,10 @@ export default function ProBoard() {
   const [form, setForm]               = useState(blankContractor());
   const [submitted, setSubmitted]     = useState(false);
   const [isAdmin, setIsAdmin]         = useState(false);
+  const [deleteModal, setDeleteModal] = useState(null); // {id, type}
+  const [deleteCodeInput, setDeleteCodeInput] = useState("");
+  const [deleteError, setDeleteError] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [adminInput, setAdminInput]   = useState("");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const ADMIN_PASSWORD = "proboard2024";
@@ -111,6 +116,23 @@ export default function ProBoard() {
   const tryAdminLogin = () => {
     if (adminInput === ADMIN_PASSWORD) { setIsAdmin(true); setShowAdminLogin(false); setAdminInput(""); }
     else { alert("Incorrect password."); }
+  };
+
+  const handleSelfDelete = async () => {
+    const item = deleteModal.type === "contractor"
+      ? contractors.find(c => c.id === deleteModal.id)
+      : jobs.find(j => j.id === deleteModal.id);
+    if (!item) return;
+    if (deleteCodeInput !== item.delete_code) { setDeleteError(true); return; }
+    if (deleteModal.type === "contractor") {
+      setContractors(contractors.filter(c => c.id !== deleteModal.id));
+      await db.delete("contractors", deleteModal.id);
+    } else {
+      setJobs(jobs.filter(j => j.id !== deleteModal.id));
+      await db.delete("jobs", deleteModal.id);
+    }
+    setDeleteSuccess(true);
+    setTimeout(() => { setDeleteModal(null); setDeleteCodeInput(""); setDeleteError(false); setDeleteSuccess(false); }, 2000);
   };
 
   const deleteContractor = async (id) => {
@@ -351,9 +373,15 @@ export default function ProBoard() {
                 <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:11,color:"#aaa",marginTop:4}}>Posted {selected.posted}</div>
               </div>
               <a href={`mailto:${selected.contact}?subject=Re: ${selected.title}`}
-                style={{display:"block",textAlign:"center",background:"#1C1C1A",color:"#F7F3EC",fontFamily:"'Epilogue',sans-serif",fontWeight:700,fontSize:15,padding:"14px",textDecoration:"none"}}>
+                style={{display:"block",textAlign:"center",background:"#1C1C1A",color:"#F7F3EC",fontFamily:"'Epilogue',sans-serif",fontWeight:700,fontSize:15,padding:"14px",textDecoration:"none",marginBottom:10}}>
                 Apply for this job
               </a>
+              {!["j1","j2","j3"].includes(selected.id) && (
+                <button onClick={()=>{setDeleteModal({id:selected.id,type:"job"});setSelected(null);}}
+                  style={{width:"100%",background:"none",border:"1px solid #FCA5A5",color:"#EF4444",fontFamily:"'Epilogue',sans-serif",fontWeight:600,fontSize:13,padding:"11px",cursor:"pointer"}}>
+                  Remove this job posting
+                </button>
+              )}
             </>
           ) : (
             <>
@@ -382,7 +410,13 @@ export default function ProBoard() {
                 {selected.email && <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:13,color:"#666"}}>{selected.email}</div>}
               </div>
               <a href={`tel:${selected.phone}`} style={{display:"block",textAlign:"center",background:"#1C1C1A",color:"#F7F3EC",fontFamily:"'Epilogue',sans-serif",fontWeight:700,fontSize:15,padding:"14px",textDecoration:"none",marginBottom:10}}>Call now</a>
-              <a href={`mailto:${selected.email}`} style={{display:"block",textAlign:"center",background:"#fff",border:"1px solid #DDD8CE",color:"#444",fontFamily:"'Epilogue',sans-serif",fontWeight:600,fontSize:15,padding:"13px",textDecoration:"none"}}>Send email</a>
+              <a href={`mailto:${selected.email}`} style={{display:"block",textAlign:"center",background:"#fff",border:"1px solid #DDD8CE",color:"#444",fontFamily:"'Epilogue',sans-serif",fontWeight:600,fontSize:15,padding:"13px",textDecoration:"none",marginBottom:10}}>Send email</a>
+              {!["c1","c2","c3","c4","c5"].includes(selected.id) && (
+                <button onClick={()=>{setDeleteModal({id:selected.id,type:"contractor"});setSelected(null);}}
+                  style={{width:"100%",background:"none",border:"1px solid #FCA5A5",color:"#EF4444",fontFamily:"'Epilogue',sans-serif",fontWeight:600,fontSize:13,padding:"11px",cursor:"pointer"}}>
+                  Remove my listing
+                </button>
+              )}
             </>
           )}
         </div>
@@ -394,8 +428,13 @@ export default function ProBoard() {
           {submitted ? (
             <div style={{textAlign:"center",padding:"60px 20px"}}>
               <div style={{fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:28,color:"#2E6B3E",marginBottom:12}}>Done.</div>
-              <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:14,color:"#555"}}>
+              <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:14,color:"#555",marginBottom:20}}>
                 {formType==="contractor" ? "Your listing is now live and synced." : "Your job is now posted and visible to all contractors."}
+              </div>
+              <div style={{background:"#EDE8DF",border:"1px solid #DDD8CE",padding:"16px",textAlign:"center"}}>
+                <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:11,color:"#888",letterSpacing:"0.1em",marginBottom:6,textTransform:"uppercase"}}>Your delete code — save this</div>
+                <div style={{fontFamily:"'Epilogue',sans-serif",fontWeight:900,fontSize:32,color:"#1C1C1A",letterSpacing:"0.2em"}}>{form.delete_code}</div>
+                <div style={{fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:12,color:"#888",marginTop:6}}>You'll need this to remove your listing later</div>
               </div>
             </div>
           ) : (
@@ -465,6 +504,39 @@ export default function ProBoard() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* DELETE MODAL */}
+      {deleteModal && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:100}}>
+          <div style={{background:"#F7F3EC",width:"100%",maxWidth:560,padding:"24px 20px 36px",borderTop:"3px solid #1C1C1A"}}>
+            {deleteSuccess ? (
+              <div style={{textAlign:"center",padding:"20px 0"}}>
+                <div style={{fontFamily:"'Lora',serif",fontStyle:"italic",fontSize:22,color:"#2E6B3E",marginBottom:8}}>Removed.</div>
+                <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:13,color:"#888"}}>Your listing has been deleted.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{fontFamily:"'Epilogue',sans-serif",fontWeight:800,fontSize:18,color:"#1C1C1A",marginBottom:6}}>Delete your listing</div>
+                <div style={{fontFamily:"'Lora',serif",fontSize:13,color:"#666",marginBottom:16,lineHeight:1.6}}>Enter the 6-digit delete code you received when you submitted this listing.</div>
+                <input value={deleteCodeInput} onChange={e=>{setDeleteCodeInput(e.target.value);setDeleteError(false);}}
+                  placeholder="Enter delete code" maxLength={6} inputMode="numeric"
+                  style={{width:"100%",background:"#fff",border:`1px solid ${deleteError?"#EF4444":"#DDD8CE"}`,color:"#1C1C1A",padding:"12px 14px",fontSize:18,fontFamily:"'Epilogue',sans-serif",textAlign:"center",letterSpacing:"0.2em",marginBottom:6}}/>
+                {deleteError && <div style={{fontFamily:"'Epilogue',sans-serif",fontSize:12,color:"#EF4444",marginBottom:10}}>Incorrect code. Check the email you received when you listed.</div>}
+                <div style={{display:"flex",gap:10,marginTop:12}}>
+                  <button onClick={()=>{setDeleteModal(null);setDeleteCodeInput("");setDeleteError(false);}}
+                    style={{flex:1,background:"none",border:"1px solid #DDD8CE",color:"#888",fontFamily:"'Epilogue',sans-serif",fontWeight:600,fontSize:14,padding:"12px",cursor:"pointer"}}>
+                    Cancel
+                  </button>
+                  <button onClick={handleSelfDelete}
+                    style={{flex:1,background:"#EF4444",border:"none",color:"#fff",fontFamily:"'Epilogue',sans-serif",fontWeight:700,fontSize:14,padding:"12px",cursor:"pointer"}}>
+                    Delete listing
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
